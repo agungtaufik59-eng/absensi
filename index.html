@@ -2,7 +2,14 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <!-- FIX: Viewport Meta untuk tampilan mobile penuh -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Aplikasi Absensi</title>
+  
+  <!-- FIX: Link Manifest agar bisa di-install -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,8 +24,8 @@
 </head>
 <body class="bg-gray-200 flex justify-center h-screen overflow-hidden">
 
-  <!-- Container Wrapper (Membentuk tampilan seperti HP) -->
-  <div class="w-full max-w-md bg-white h-full flex flex-col relative shadow-2xl">
+  <!-- FIX: Ganti max-w-md menjadi w-full agar Full Screen di HP -->
+  <div class="w-full bg-white h-full flex flex-col relative shadow-2xl">
     
     <!-- Bagian Login -->
     <div id="login-section" class="flex flex-col justify-center h-full px-8">
@@ -141,7 +148,16 @@
     let currentUser = null;
     let appData = null;
     let userCoords = null;
-    let activeMonth = ""; // Variabel baru untuk filter
+    let activeMonth = ""; 
+
+    // FIX: Daftarkan Service Worker untuk Installability PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('SW terdaftar!'))
+          .catch(err => console.log('SW gagal!'));
+      });
+    }
 
     // Jam Realtime
     setInterval(() => {
@@ -159,10 +175,9 @@
       }
     };
 
-    // FUNGSI BARU: Render Chips Bulan
     function renderMonthChips() {
       const container = document.getElementById('month-filter-container');
-      if(!container) return; // Guard jika elemen belum ada
+      if(!container) return; 
       
       const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
       let html = `<button onclick="filterByMonth('', 'Semua')" id="chip-all" class="month-chip whitespace-nowrap px-5 py-2 rounded-full text-[11px] font-bold transition-all bg-blue-600 text-white shadow-md">Semua</button>`;
@@ -174,7 +189,6 @@
       container.innerHTML = html;
     }
 
-    // FUNGSI BARU: Aksi saat chip diklik
     function filterByMonth(monthCode, monthName) {
       activeMonth = monthCode;
       document.querySelectorAll('.month-chip').forEach(btn => {
@@ -222,7 +236,7 @@
       document.getElementById('profile-name').innerText = currentUser.nama;
       document.getElementById('profile-email').innerText = currentUser.email;
 
-      renderMonthChips(); // Update: Panggil render chips di sini
+      renderMonthChips(); 
       loadAppData();
     }
 
@@ -343,94 +357,74 @@
       if (tabName === 'riwayat') loadRiwayat();
     }
 
-// Ganti XXXXX dengan URL Web App (Deployment) Google Apps Script Anda
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnCFlg_Gf72nzZpgBTMVXZ0jEbwibHw9U1pwLcxilPcyBXSzRWUBhMWNc2O3VKW0Xv8w/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnCFlg_Gf72nzZpgBTMVXZ0jEbwibHw9U1pwLcxilPcyBXSzRWUBhMWNc2O3VKW0Xv8w/exec";
 
-function loadRiwayat() {
-  const listContainer = document.getElementById('history-list');
-  listContainer.innerHTML = `<div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl text-blue-500"></i></div>`;
+    function loadRiwayat() {
+      const listContainer = document.getElementById('history-list');
+      listContainer.innerHTML = `<div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl text-blue-500"></i></div>`;
 
-  // Menggunakan fetch sebagai pengganti google.script.run
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors", // Gunakan ini jika ada kendala CORS, atau hapus jika sudah lancar
-    body: JSON.stringify({
-      action: "getRiwayat",
-      email: currentUser.email,
-      filterBulan: activeMonth
-    })
-  })
-  .then(response => {
-    // Karena Apps Script doPost mengembalikan JSON, kita proses di sini
-    return fetch(SCRIPT_URL + "?action=getRiwayat&email=" + currentUser.email + "&filterBulan=" + activeMonth);
-  })
-  .then(res => res.json())
-  .then(data => {
-    let html = '';
-    
-    // --- LOGIKA HITUNG REKAP ---
-    let hitungHadir = 0;
-    let hitungIzin = 0;
-    let hitungSakit = 0;
+      fetch(SCRIPT_URL + "?action=getRiwayat&email=" + currentUser.email + "&filterBulan=" + activeMonth)
+      .then(res => res.json())
+      .then(data => {
+        let html = '';
+        let hitungHadir = 0;
+        let hitungIzin = 0;
+        let hitungSakit = 0;
 
-    if (!data || data.length === 0) {
-      html = `<div class="text-center text-gray-400 py-10">Kosong.</div>`;
-    } else {
-      data.forEach(item => {
-        // Hitung status
-        if (item.status === 'Hadir' || item.status === 'WFH') {
-          hitungHadir++;
-        } else if (item.status === 'Izin') {
-          hitungIzin++;
-        } else if (item.status === 'Sakit') {
-          hitungSakit++;
+        if (!data || data.length === 0) {
+          html = `<div class="text-center text-gray-400 py-10">Kosong.</div>`;
+        } else {
+          data.forEach(item => {
+            if (item.status === 'Hadir' || item.status === 'WFH') {
+              hitungHadir++;
+            } else if (item.status === 'Izin') {
+              hitungIzin++;
+            } else if (item.status === 'Sakit') {
+              hitungSakit++;
+            }
+
+            let badgeClass = 'bg-blue-100 text-blue-700';
+            if (item.status === 'Hadir') badgeClass = 'bg-green-100 text-green-700';
+            if (item.status === 'Sakit' || item.status === 'Izin') badgeClass = 'bg-yellow-100 text-yellow-700';
+            
+            html += `
+              <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center mb-4 relative overflow-hidden">
+                <div class="absolute left-0 top-0 bottom-0 w-1 ${item.status === 'Hadir' ? 'bg-green-500' : (item.status === 'Sakit' ? 'bg-red-500' : 'bg-blue-500')}"></div>
+                <div class="flex flex-col flex-1 ml-2">
+                  <div class="flex items-center gap-2 mb-3">
+                    <div class="bg-gray-100 p-2 rounded-lg text-gray-500"><i class="fa-solid fa-calendar-day text-xs"></i></div>
+                    <div>
+                      <span class="text-[9px] font-bold text-gray-400 uppercase leading-none block">Tanggal Absen</span>
+                      <p class="font-bold text-gray-800 text-sm leading-tight">${item.tanggal}</p>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-0 border-t border-gray-50 pt-3">
+                    <div class="flex flex-col">
+                      <span class="text-[9px] text-gray-400 uppercase font-bold mb-1">Masuk</span>
+                      <div class="flex items-center text-green-600"><i class="fa-solid fa-right-to-bracket text-xs mr-1.5"></i><span class="text-sm font-bold">${item.masuk}</span></div>
+                    </div>
+                    <div class="flex flex-col border-l border-gray-100 pl-4">
+                      <span class="text-[9px] text-gray-400 uppercase font-bold mb-1">Pulang</span>
+                      <div class="flex items-center text-red-500"><i class="fa-solid fa-right-from-bracket text-xs mr-1.5"></i><span class="text-sm font-bold">${item.pulang}</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                  <span class="${badgeClass} text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm border border-white/20">${item.status}</span>
+                </div>
+              </div>`;
+          });
         }
-
-        let badgeClass = 'bg-blue-100 text-blue-700';
-        if (item.status === 'Hadir') badgeClass = 'bg-green-100 text-green-700';
-        if (item.status === 'Sakit' || item.status === 'Izin') badgeClass = 'bg-yellow-100 text-yellow-700';
         
-        html += `
-          <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center mb-4 relative overflow-hidden">
-            <div class="absolute left-0 top-0 bottom-0 w-1 ${item.status === 'Hadir' ? 'bg-green-500' : (item.status === 'Sakit' ? 'bg-red-500' : 'bg-blue-500')}"></div>
-            <div class="flex flex-col flex-1 ml-2">
-              <div class="flex items-center gap-2 mb-3">
-                <div class="bg-gray-100 p-2 rounded-lg text-gray-500"><i class="fa-solid fa-calendar-day text-xs"></i></div>
-                <div>
-                  <span class="text-[9px] font-bold text-gray-400 uppercase leading-none block">Tanggal Absen</span>
-                  <p class="font-bold text-gray-800 text-sm leading-tight">${item.tanggal}</p>
-                </div>
-              </div>
-              <div class="grid grid-cols-2 gap-0 border-t border-gray-50 pt-3">
-                <div class="flex flex-col">
-                  <span class="text-[9px] text-gray-400 uppercase font-bold mb-1">Masuk</span>
-                  <div class="flex items-center text-green-600"><i class="fa-solid fa-right-to-bracket text-xs mr-1.5"></i><span class="text-sm font-bold">${item.masuk}</span></div>
-                </div>
-                <div class="flex flex-col border-l border-gray-100 pl-4">
-                  <span class="text-[9px] text-gray-400 uppercase font-bold mb-1">Pulang</span>
-                  <div class="flex items-center text-red-500"><i class="fa-solid fa-right-from-bracket text-xs mr-1.5"></i><span class="text-sm font-bold">${item.pulang}</span></div>
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-col items-end gap-2">
-              <span class="${badgeClass} text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm border border-white/20">${item.status}</span>
-            </div>
-          </div>`;
+        document.getElementById('rekap-hadir').innerText = hitungHadir;
+        document.getElementById('rekap-izin').innerText = hitungIzin;
+        document.getElementById('rekap-sakit').innerText = hitungSakit;
+        listContainer.innerHTML = html;
+      })
+      .catch(err => {
+        listContainer.innerHTML = `<div class="text-center text-red-500 py-10 text-xs text-pretty p-4 font-bold uppercase">Gagal memuat data. Periksa koneksi atau URL Script Anda.</div>`;
       });
     }
-    
-    // Update UI Rekap
-    document.getElementById('rekap-hadir').innerText = hitungHadir;
-    document.getElementById('rekap-izin').innerText = hitungIzin;
-    document.getElementById('rekap-sakit').innerText = hitungSakit;
-
-    listContainer.innerHTML = html;
-  })
-  .catch(err => {
-    console.error("Error load data:", err);
-    listContainer.innerHTML = `<div class="text-center text-red-500 py-10 text-xs text-pretty p-4 font-bold uppercase">Gagal memuat data. Periksa koneksi atau URL Script Anda.</div>`;
-  });
-}
 
     function logout() {
       Swal.fire({
