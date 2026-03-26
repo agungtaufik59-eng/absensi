@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <!-- FIX: Viewport Meta untuk tampilan mobile penuh -->
+  <!-- Viewport Meta untuk tampilan mobile penuh -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Aplikasi Absensi</title>
   
-  <!-- FIX: Link Manifest agar bisa di-install -->
+  <!-- Manifest untuk PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2563eb">
   
@@ -14,7 +14,6 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* Transisi untuk tab */
     .tab-content { display: none; }
     .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -24,10 +23,9 @@
 </head>
 <body class="bg-gray-200 flex justify-center h-screen overflow-hidden">
 
-  <!-- FIX: Ganti max-w-md menjadi w-full agar Full Screen di HP -->
   <div class="w-full bg-white h-full flex flex-col relative shadow-2xl">
     
-    <!-- Bagian Login -->
+    <!-- Login Section -->
     <div id="login-section" class="flex flex-col justify-center h-full px-8">
       <div class="text-center mb-8">
         <div class="bg-blue-600 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -41,10 +39,8 @@
       <button onclick="prosesLogin()" class="w-full bg-blue-600 text-white font-bold p-3 rounded-lg hover:bg-blue-700 transition shadow-md">LOGIN</button>
     </div>
 
-    <!-- Bagian Utama Aplikasi -->
+    <!-- Main App Section -->
     <div id="app-section" class="hidden flex-col h-full w-full">
-      
-      <!-- Header -->
       <div class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10">
         <div>
           <h2 class="font-bold text-lg">Halo, <span id="user-name">Pengguna</span></h2>
@@ -53,65 +49,48 @@
         <i class="fa-regular fa-bell text-xl"></i>
       </div>
 
-      <!-- Area Konten Tab -->
       <div class="flex-1 overflow-y-auto bg-gray-50 pb-20 p-4">
-        
-        <!-- Tab 1: Home (Absensi) -->
+        <!-- Tab Home -->
         <div id="tab-home" class="tab-content active">
           <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 mb-4 text-center">
             <h3 class="text-gray-500 text-sm font-semibold mb-1">Waktu Saat Ini</h3>
             <div id="clock" class="text-3xl font-bold text-gray-800">00:00:00</div>
             <div id="date" class="text-sm text-gray-500 mt-1">Hari, Tanggal</div>
           </div>
-
           <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 text-center mb-4">
             <h3 class="text-gray-700 font-bold mb-2">Status Lokasi Anda</h3>
             <p id="location-status" class="text-sm text-gray-500 mb-3"><i class="fa-solid fa-spinner fa-spin"></i> Mendeteksi lokasi...</p>
-            
-            <!-- Tombol Absen (Dinamis via JS) -->
-            <div id="action-buttons" class="hidden flex-col gap-3">
-              <!-- Tombol akan di-inject lewat JavaScript -->
-            </div>
+            <div id="action-buttons" class="hidden flex-col gap-3"></div>
           </div>
         </div>
 
-        <!-- Tab 2: Riwayat -->
+        <!-- Tab Riwayat -->
         <div id="tab-riwayat" class="tab-content">
-          <!-- Container Chips Bulan (Horizontal Scroll) -->
-          <div class="flex overflow-x-auto gap-2 pb-4 no-scrollbar" id="month-filter-container">
-            <!-- Chips akan di-inject via JavaScript -->
-          </div>
-
-          <!-- AREA REKAP (Grid 3 Kolom) -->
+          <div class="flex overflow-x-auto gap-2 pb-4 no-scrollbar" id="month-filter-container"></div>
           <div id="rekap-container" class="grid grid-cols-3 gap-3 mb-6 animate-fade-in">
-            <!-- Rekap Hadir -->
             <div class="bg-green-50 p-3 rounded-2xl border border-green-100 text-center shadow-sm">
               <span class="text-[9px] font-bold text-green-600 uppercase block mb-1 tracking-tight">Hadir</span>
               <span id="rekap-hadir" class="text-xl font-black text-green-700">0</span>
             </div>
-            <!-- Rekap Izin -->
             <div class="bg-yellow-50 p-3 rounded-2xl border border-yellow-100 text-center shadow-sm">
               <span class="text-[9px] font-bold text-yellow-600 uppercase block mb-1 tracking-tight">Izin</span>
               <span id="rekap-izin" class="text-xl font-black text-yellow-700">0</span>
             </div>
-            <!-- Rekap Sakit -->
             <div class="bg-red-50 p-3 rounded-2xl border border-red-100 text-center shadow-sm">
               <span class="text-[9px] font-bold text-red-600 uppercase block mb-1 tracking-tight">Sakit</span>
               <span id="rekap-sakit" class="text-xl font-black text-red-700">0</span>
             </div>
           </div>
-
           <h3 class="font-bold text-gray-800 mb-3 flex justify-between items-center">
             <span><i class="fa-solid fa-history text-blue-600 mr-2"></i>Riwayat Terakhir</span>
             <span id="selected-month-label" class="text-xs font-normal text-blue-500 bg-blue-50 px-2 py-1 rounded-md">Semua</span>
           </h3>
-          
           <div id="history-list" class="flex flex-col gap-3">
             <div class="text-center text-gray-500 text-sm py-5"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div>
           </div>
         </div>
 
-        <!-- Tab 3: Profil -->
+        <!-- Tab Profil -->
         <div id="tab-profil" class="tab-content">
           <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 text-center">
             <div class="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center text-gray-400 text-3xl">
@@ -122,10 +101,9 @@
             <button onclick="logout()" class="w-full bg-red-100 text-red-600 font-bold p-3 rounded-lg hover:bg-red-200 transition">Logout</button>
           </div>
         </div>
-
       </div>
 
-      <!-- Navigasi Bawah (Bottom Navigation) -->
+      <!-- Bottom Navigation -->
       <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-2 pb-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         <button onclick="switchTab('home')" class="nav-btn flex flex-col items-center text-blue-600 w-16" data-target="tab-home">
           <i class="fa-solid fa-house text-xl mb-1"></i>
@@ -140,17 +118,35 @@
           <span class="text-[10px] font-semibold">Profil</span>
         </button>
       </div>
-
     </div>
   </div>
 
   <script>
+    // ==================== KONFIGURASI ====================
+    // GANTI URL INI DENGAN URL WEB APP ANDA SETELAH DEPLOY
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbxnCFlg_Gf72nzZpgBTMVXZ0jEbwibHw9U1pwLcxilPcyBXSzRWUBhMWNc2O3VKW0Xv8w/exec";
+
     let currentUser = null;
     let appData = null;
     let userCoords = null;
-    let activeMonth = ""; 
+    let activeMonth = "";
 
-    // FIX: Daftarkan Service Worker untuk Installability PWA
+    // ==================== Helper: Panggil Backend ====================
+    async function callBackend(action, data) {
+      const payload = { action, ...data };
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      return await response.json();
+    }
+
+    // ==================== PWA Service Worker (Opsional) ====================
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
@@ -159,14 +155,14 @@
       });
     }
 
-    // Jam Realtime
+    // ==================== Jam Real-time ====================
     setInterval(() => {
       const now = new Date();
       document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
       document.getElementById('date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     }, 1000);
 
-    // Cek Session saat reload
+    // ==================== Cek Session ====================
     window.onload = () => {
       const savedUser = localStorage.getItem('absensi_user');
       if (savedUser) {
@@ -175,13 +171,12 @@
       }
     };
 
+    // ==================== Fungsi Render Bulan ====================
     function renderMonthChips() {
       const container = document.getElementById('month-filter-container');
       if(!container) return; 
-      
       const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
       let html = `<button onclick="filterByMonth('', 'Semua')" id="chip-all" class="month-chip whitespace-nowrap px-5 py-2 rounded-full text-[11px] font-bold transition-all bg-blue-600 text-white shadow-md">Semua</button>`;
-      
       months.forEach((m, index) => {
         const monthVal = (index + 1).toString().padStart(2, '0'); 
         html += `<button onclick="filterByMonth('${monthVal}', '${m}')" id="chip-${monthVal}" class="month-chip whitespace-nowrap px-5 py-2 rounded-full text-[11px] font-bold transition-all bg-white text-gray-500 border border-gray-100 shadow-sm">${m}</button>`;
@@ -196,26 +191,26 @@
         btn.classList.add('bg-white', 'text-gray-500', 'border-gray-100');
       });
       const activeBtn = monthCode === '' ? document.getElementById('chip-all') : document.getElementById('chip-' + monthCode);
-      activeBtn.classList.replace('bg-white', 'bg-blue-600');
-      activeBtn.classList.replace('text-gray-500', 'text-white');
-      activeBtn.classList.remove('border-gray-100');
-      activeBtn.classList.add('shadow-md');
-      
+      if (activeBtn) {
+        activeBtn.classList.replace('bg-white', 'bg-blue-600');
+        activeBtn.classList.replace('text-gray-500', 'text-white');
+        activeBtn.classList.remove('border-gray-100');
+        activeBtn.classList.add('shadow-md');
+      }
       const label = document.getElementById('selected-month-label');
       if(label) label.innerText = monthName;
-      
       loadRiwayat();
     }
 
-    function prosesLogin() {
+    // ==================== Login ====================
+    async function prosesLogin() {
       const email = document.getElementById('email').value;
       const pass = document.getElementById('password').value;
-      
       if(!email || !pass) return Swal.fire('Error', 'Harap isi semua kolom!', 'error');
 
       Swal.fire({ title: 'Mengecek Data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
-
-      google.script.run.withSuccessHandler((res) => {
+      try {
+        const res = await callBackend('login', { email, password: pass });
         if (res.success) {
           currentUser = res.user;
           localStorage.setItem('absensi_user', JSON.stringify(currentUser));
@@ -224,29 +219,35 @@
         } else {
           Swal.fire('Gagal', res.message, 'error');
         }
-      }).loginUser(email, pass);
+      } catch (err) {
+        Swal.fire('Error', 'Gagal terhubung ke server: ' + err.message, 'error');
+      }
     }
 
+    // ==================== Inisialisasi Aplikasi ====================
     function initApp() {
       document.getElementById('login-section').classList.add('hidden');
       document.getElementById('app-section').classList.replace('hidden', 'flex');
-      
       document.getElementById('user-name').innerText = currentUser.nama;
       document.getElementById('user-role').innerText = currentUser.jabatan;
       document.getElementById('profile-name').innerText = currentUser.nama;
       document.getElementById('profile-email').innerText = currentUser.email;
-
-      renderMonthChips(); 
+      renderMonthChips();
       loadAppData();
     }
 
-    function loadAppData() {
-      google.script.run.withSuccessHandler((res) => {
+    async function loadAppData() {
+      try {
+        const res = await callBackend('getAppInitData', { email: currentUser.email });
         appData = res;
         cekLokasi();
-      }).getAppInitData(currentUser.email);
+      } catch (err) {
+        console.error('loadAppData error:', err);
+        Swal.fire('Error', 'Gagal memuat data awal.', 'error');
+      }
     }
 
+    // ==================== Lokasi & Radius ====================
     function cekLokasi() {
       const statusEl = document.getElementById('location-status');
       if (!appData || !appData.kantor) return;
@@ -257,22 +258,18 @@
       }
 
       const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
-
       navigator.geolocation.getCurrentPosition(
         (position) => {
           userCoords = { lat: position.coords.latitude, lng: position.coords.longitude };
           const kLat = parseFloat(appData.kantor.lat);
           const kLng = parseFloat(appData.kantor.lng);
-          
           if (isNaN(kLat) || isNaN(kLng)) {
             statusEl.innerHTML = '<span class="text-red-500 font-bold">Error: Koordinat Sheet salah!</span>';
             return;
           }
-
           const distance = hitungJarak(userCoords.lat, userCoords.lng, kLat, kLng);
-          let inRadius = distance <= appData.kantor.radius;
-          let distanceText = Math.round(distance) + " m";
-
+          const inRadius = distance <= appData.kantor.radius;
+          const distanceText = Math.round(distance) + " m";
           if(inRadius) {
             statusEl.innerHTML = `<span class="text-green-600 font-bold"><i class="fa-solid fa-check-circle"></i> Dalam Radius (${distanceText})</span>`;
           } else {
@@ -324,64 +321,56 @@
       }
     }
 
-    function kirimAbsen(tipe, statusKet) {
-      Swal.fire({
+    // ==================== Submit Absen ====================
+    async function kirimAbsen(tipe, statusKet) {
+      const confirm = await Swal.fire({
         title: 'Konfirmasi',
         text: `Absen ${tipe.toUpperCase()} (${statusKet})?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Ya'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          Swal.fire({ title: 'Memproses...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
-          google.script.run.withSuccessHandler((res) => {
-            if(res.success) {
-              Swal.fire('Berhasil!', res.message, 'success').then(() => { loadAppData(); });
-            } else {
-              Swal.fire('Gagal!', res.message, 'error');
-            }
-          }).submitAbsen(currentUser.email, tipe, userCoords.lat, userCoords.lng, statusKet);
+      });
+      if (!confirm.isConfirmed) return;
+
+      Swal.fire({ title: 'Memproses...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+      try {
+        const res = await callBackend('submitAbsen', {
+          email: currentUser.email,
+          tipe: tipe,
+          lat: userCoords.lat,
+          lng: userCoords.lng,
+          statusKet: statusKet
+        });
+        if (res.success) {
+          Swal.fire('Berhasil!', res.message, 'success').then(() => { loadAppData(); });
+        } else {
+          Swal.fire('Gagal!', res.message, 'error');
         }
-      });
+      } catch (err) {
+        Swal.fire('Error', err.message, 'error');
+      }
     }
 
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.getElementById('tab-' + tabName).classList.add('active');
-      document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('text-blue-600');
-        btn.classList.add('text-gray-400');
-      });
-      document.querySelector(`[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
-      document.querySelector(`[data-target="tab-${tabName}"]`).classList.remove('text-gray-400');
-      if (tabName === 'riwayat') loadRiwayat();
-    }
-
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnCFlg_Gf72nzZpgBTMVXZ0jEbwibHw9U1pwLcxilPcyBXSzRWUBhMWNc2O3VKW0Xv8w/exec";
-
-    function loadRiwayat() {
+    // ==================== Riwayat ====================
+    async function loadRiwayat() {
       const listContainer = document.getElementById('history-list');
       listContainer.innerHTML = `<div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl text-blue-500"></i></div>`;
 
-      fetch(SCRIPT_URL + "?action=getRiwayat&email=" + currentUser.email + "&filterBulan=" + activeMonth)
-      .then(res => res.json())
-      .then(data => {
+      try {
+        const data = await callBackend('getRiwayat', {
+          email: currentUser.email,
+          filterBulan: activeMonth
+        });
         let html = '';
-        let hitungHadir = 0;
-        let hitungIzin = 0;
-        let hitungSakit = 0;
+        let hitungHadir = 0, hitungIzin = 0, hitungSakit = 0;
 
         if (!data || data.length === 0) {
           html = `<div class="text-center text-gray-400 py-10">Kosong.</div>`;
         } else {
           data.forEach(item => {
-            if (item.status === 'Hadir' || item.status === 'WFH') {
-              hitungHadir++;
-            } else if (item.status === 'Izin') {
-              hitungIzin++;
-            } else if (item.status === 'Sakit') {
-              hitungSakit++;
-            }
+            if (item.status === 'Hadir' || item.status === 'WFH') hitungHadir++;
+            else if (item.status === 'Izin') hitungIzin++;
+            else if (item.status === 'Sakit') hitungSakit++;
 
             let badgeClass = 'bg-blue-100 text-blue-700';
             if (item.status === 'Hadir') badgeClass = 'bg-green-100 text-green-700';
@@ -415,15 +404,29 @@
               </div>`;
           });
         }
-        
         document.getElementById('rekap-hadir').innerText = hitungHadir;
         document.getElementById('rekap-izin').innerText = hitungIzin;
         document.getElementById('rekap-sakit').innerText = hitungSakit;
         listContainer.innerHTML = html;
-      })
-      .catch(err => {
-        listContainer.innerHTML = `<div class="text-center text-red-500 py-10 text-xs text-pretty p-4 font-bold uppercase">Gagal memuat data. Periksa koneksi atau URL Script Anda.</div>`;
+      } catch (err) {
+        listContainer.innerHTML = `<div class="text-center text-red-500 py-10 text-xs text-pretty p-4 font-bold uppercase">Gagal memuat data: ${err.message}</div>`;
+      }
+    }
+
+    // ==================== Tab & Logout ====================
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-blue-600');
+        btn.classList.add('text-gray-400');
       });
+      const activeBtn = document.querySelector(`[data-target="tab-${tabName}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('text-blue-600');
+        activeBtn.classList.remove('text-gray-400');
+      }
+      if (tabName === 'riwayat') loadRiwayat();
     }
 
     function logout() {
@@ -439,6 +442,6 @@
         }
       });
     }
-</script>
+  </script>
 </body>
 </html>
