@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Aplikasi Absensi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Transisi untuk tab */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-gray-200 flex justify-center h-screen overflow-hidden">
+
+  <!-- Container Wrapper (Membentuk tampilan seperti HP) -->
+  <div class="w-full max-w-md bg-white h-full flex flex-col relative shadow-2xl">
+    
+    <!-- Bagian Login -->
+    <div id="login-section" class="flex flex-col justify-center h-full px-8">
+      <div class="text-center mb-8">
+        <div class="bg-blue-600 text-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <i class="fa-solid fa-fingerprint text-4xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800">AbsensiKu</h1>
+        <p class="text-gray-500 text-sm">Silakan login untuk melanjutkan</p>
+      </div>
+      <input type="email" id="email" placeholder="Email Anda" class="mb-4 w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <input type="password" id="password" placeholder="Password" class="mb-6 w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <button onclick="prosesLogin()" class="w-full bg-blue-600 text-white font-bold p-3 rounded-lg hover:bg-blue-700 transition shadow-md">LOGIN</button>
+    </div>
+
+    <!-- Bagian Utama Aplikasi -->
+    <div id="app-section" class="hidden flex-col h-full w-full">
+      
+      <!-- Header -->
+      <div class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10">
+        <div>
+          <h2 class="font-bold text-lg">Halo, <span id="user-name">Pengguna</span></h2>
+          <p class="text-xs opacity-80" id="user-role">Jabatan</p>
+        </div>
+        <i class="fa-regular fa-bell text-xl"></i>
+      </div>
+
+      <!-- Area Konten Tab -->
+      <div class="flex-1 overflow-y-auto bg-gray-50 pb-20 p-4">
+        
+        <!-- Tab 1: Home (Absensi) -->
+        <div id="tab-home" class="tab-content active">
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 mb-4 text-center">
+            <h3 class="text-gray-500 text-sm font-semibold mb-1">Waktu Saat Ini</h3>
+            <div id="clock" class="text-3xl font-bold text-gray-800">00:00:00</div>
+            <div id="date" class="text-sm text-gray-500 mt-1">Hari, Tanggal</div>
+          </div>
+
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 text-center mb-4">
+            <h3 class="text-gray-700 font-bold mb-2">Status Lokasi Anda</h3>
+            <p id="location-status" class="text-sm text-gray-500 mb-3"><i class="fa-solid fa-spinner fa-spin"></i> Mendeteksi lokasi...</p>
+            
+            <!-- Tombol Absen (Dinamis via JS) -->
+            <div id="action-buttons" class="hidden flex-col gap-3">
+              <!-- Tombol akan di-inject lewat JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Riwayat -->
+        <div id="tab-riwayat" class="tab-content">
+          <!-- Container Chips Bulan (Horizontal Scroll) -->
+          <div class="flex overflow-x-auto gap-2 pb-4 no-scrollbar" id="month-filter-container">
+            <!-- Chips akan di-inject via JavaScript -->
+          </div>
+
+          <!-- AREA REKAP (Grid 3 Kolom) -->
+          <div id="rekap-container" class="grid grid-cols-3 gap-3 mb-6 animate-fade-in">
+            <!-- Rekap Hadir -->
+            <div class="bg-green-50 p-3 rounded-2xl border border-green-100 text-center shadow-sm">
+              <span class="text-[9px] font-bold text-green-600 uppercase block mb-1 tracking-tight">Hadir</span>
+              <span id="rekap-hadir" class="text-xl font-black text-green-700">0</span>
+            </div>
+            <!-- Rekap Izin -->
+            <div class="bg-yellow-50 p-3 rounded-2xl border border-yellow-100 text-center shadow-sm">
+              <span class="text-[9px] font-bold text-yellow-600 uppercase block mb-1 tracking-tight">Izin</span>
+              <span id="rekap-izin" class="text-xl font-black text-yellow-700">0</span>
+            </div>
+            <!-- Rekap Sakit -->
+            <div class="bg-red-50 p-3 rounded-2xl border border-red-100 text-center shadow-sm">
+              <span class="text-[9px] font-bold text-red-600 uppercase block mb-1 tracking-tight">Sakit</span>
+              <span id="rekap-sakit" class="text-xl font-black text-red-700">0</span>
+            </div>
+          </div>
+
+          <h3 class="font-bold text-gray-800 mb-3 flex justify-between items-center">
+            <span><i class="fa-solid fa-history text-blue-600 mr-2"></i>Riwayat Terakhir</span>
+            <span id="selected-month-label" class="text-xs font-normal text-blue-500 bg-blue-50 px-2 py-1 rounded-md">Semua</span>
+          </h3>
+          
+          <div id="history-list" class="flex flex-col gap-3">
+            <div class="text-center text-gray-500 text-sm py-5"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Profil -->
+        <div id="tab-profil" class="tab-content">
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 text-center">
+            <div class="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center text-gray-400 text-3xl">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <h2 id="profile-name" class="font-bold text-xl text-gray-800">Nama</h2>
+            <p id="profile-email" class="text-gray-500 text-sm mb-5">Email</p>
+            <button onclick="logout()" class="w-full bg-red-100 text-red-600 font-bold p-3 rounded-lg hover:bg-red-200 transition">Logout</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Navigasi Bawah (Bottom Navigation) -->
+      <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-2 pb-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <button onclick="switchTab('home')" class="nav-btn flex flex-col items-center text-blue-600 w-16" data-target="tab-home">
+          <i class="fa-solid fa-house text-xl mb-1"></i>
+          <span class="text-[10px] font-semibold">Home</span>
+        </button>
+        <button onclick="switchTab('riwayat')" class="nav-btn flex flex-col items-center text-gray-400 w-16" data-target="tab-riwayat">
+          <i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i>
+          <span class="text-[10px] font-semibold">Riwayat</span>
+        </button>
+        <button onclick="switchTab('profil')" class="nav-btn flex flex-col items-center text-gray-400 w-16" data-target="tab-profil">
+          <i class="fa-solid fa-user text-xl mb-1"></i>
+          <span class="text-[10px] font-semibold">Profil</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let appData = null;
+    let userCoords = null;
+    let activeMonth = ""; // Variabel baru untuk filter
+
+    // Jam Realtime
+    setInterval(() => {
+      const now = new Date();
+      document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
+      document.getElementById('date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }, 1000);
+
+    // Cek Session saat reload
+    window.onload = () => {
+      const savedUser = localStorage.getItem('absensi_user');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        initApp();
+      }
+    };
+
+    // FUNGSI BARU: Render Chips Bulan
+    function renderMonthChips() {
+      const container = document.getElementById('month-filter-container');
+      if(!container) return; // Guard jika elemen belum ada
+      
+      const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+      let html = `<button onclick="filterByMonth('', 'Semua')" id="chip-all" class="month-chip whitespace-nowrap px-5 py-2 rounded-full text-[11px] font-bold transition-all bg-blue-600 text-white shadow-md">Semua</button>`;
+      
+      months.forEach((m, index) => {
+        const monthVal = (index + 1).toString().padStart(2, '0'); 
+        html += `<button onclick="filterByMonth('${monthVal}', '${m}')" id="chip-${monthVal}" class="month-chip whitespace-nowrap px-5 py-2 rounded-full text-[11px] font-bold transition-all bg-white text-gray-500 border border-gray-100 shadow-sm">${m}</button>`;
+      });
+      container.innerHTML = html;
+    }
+
+    // FUNGSI BARU: Aksi saat chip diklik
+    function filterByMonth(monthCode, monthName) {
+      activeMonth = monthCode;
+      document.querySelectorAll('.month-chip').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+        btn.classList.add('bg-white', 'text-gray-500', 'border-gray-100');
+      });
+      const activeBtn = monthCode === '' ? document.getElementById('chip-all') : document.getElementById('chip-' + monthCode);
+      activeBtn.classList.replace('bg-white', 'bg-blue-600');
+      activeBtn.classList.replace('text-gray-500', 'text-white');
+      activeBtn.classList.remove('border-gray-100');
+      activeBtn.classList.add('shadow-md');
+      
+      const label = document.getElementById('selected-month-label');
+      if(label) label.innerText = monthName;
+      
+      loadRiwayat();
+    }
+
+    function prosesLogin() {
+      const email = document.getElementById('email').value;
+      const pass = document.getElementById('password').value;
+      
+      if(!email || !pass) return Swal.fire('Error', 'Harap isi semua kolom!', 'error');
+
+      Swal.fire({ title: 'Mengecek Data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+
+      google.script.run.withSuccessHandler((res) => {
+        if (res.success) {
+          currentUser = res.user;
+          localStorage.setItem('absensi_user', JSON.stringify(currentUser));
+          Swal.close();
+          initApp();
+        } else {
+          Swal.fire('Gagal', res.message, 'error');
+        }
+      }).loginUser(email, pass);
+    }
+
+    function initApp() {
+      document.getElementById('login-section').classList.add('hidden');
+      document.getElementById('app-section').classList.replace('hidden', 'flex');
+      
+      document.getElementById('user-name').innerText = currentUser.nama;
+      document.getElementById('user-role').innerText = currentUser.jabatan;
+      document.getElementById('profile-name').innerText = currentUser.nama;
+      document.getElementById('profile-email').innerText = currentUser.email;
+
+      renderMonthChips(); // Update: Panggil render chips di sini
+      loadAppData();
+    }
+
+    function loadAppData() {
+      google.script.run.withSuccessHandler((res) => {
+        appData = res;
+        cekLokasi();
+      }).getAppInitData(currentUser.email);
+    }
+
+    function cekLokasi() {
+      const statusEl = document.getElementById('location-status');
+      if (!appData || !appData.kantor) return;
+
+      if (!navigator.geolocation) {
+        statusEl.innerHTML = '<span class="text-red-500">GPS tidak didukung.</span>';
+        return;
+      }
+
+      const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userCoords = { lat: position.coords.latitude, lng: position.coords.longitude };
+          const kLat = parseFloat(appData.kantor.lat);
+          const kLng = parseFloat(appData.kantor.lng);
+          
+          if (isNaN(kLat) || isNaN(kLng)) {
+            statusEl.innerHTML = '<span class="text-red-500 font-bold">Error: Koordinat Sheet salah!</span>';
+            return;
+          }
+
+          const distance = hitungJarak(userCoords.lat, userCoords.lng, kLat, kLng);
+          let inRadius = distance <= appData.kantor.radius;
+          let distanceText = Math.round(distance) + " m";
+
+          if(inRadius) {
+            statusEl.innerHTML = `<span class="text-green-600 font-bold"><i class="fa-solid fa-check-circle"></i> Dalam Radius (${distanceText})</span>`;
+          } else {
+            statusEl.innerHTML = `<span class="text-red-500 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Luar Radius (${distanceText})</span>`;
+          }
+          renderTombolAbsen(inRadius);
+        },
+        (error) => {
+          let msg = "Gagal lokasi.";
+          if (error.code === 1) msg = "Izin GPS ditolak!";
+          statusEl.innerHTML = `<span class="text-red-500 font-bold">${msg}</span>`;
+        },
+        options
+      );
+    }
+
+    function hitungJarak(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const φ1 = lat1 * Math.PI/180;
+      const φ2 = lat2 * Math.PI/180;
+      const Δφ = (lat2-lat1) * Math.PI/180;
+      const Δλ = (lon2-lon1) * Math.PI/180;
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c; 
+    }
+
+    function renderTombolAbsen(inRadius) {
+      const btnContainer = document.getElementById('action-buttons');
+      btnContainer.classList.remove('hidden');
+      btnContainer.innerHTML = '';
+      const status = appData.statusHariIni;
+
+      if (!status.masuk) {
+        if (inRadius) {
+          btnContainer.innerHTML = `<button onclick="kirimAbsen('masuk', 'Hadir')" class="w-full bg-green-600 text-white font-bold p-3 rounded-xl shadow-lg text-lg"><i class="fa-solid fa-sign-in-alt mr-2"></i> ABSEN MASUK</button>`;
+        } else {
+          btnContainer.innerHTML = `
+            <div class="flex gap-2">
+              <button onclick="kirimAbsen('masuk', 'WFH')" class="flex-1 bg-blue-500 text-white font-bold p-3 rounded-xl shadow-md">WFH</button>
+              <button onclick="kirimAbsen('masuk', 'Sakit')" class="flex-1 bg-red-500 text-white font-bold p-3 rounded-xl shadow-md">SAKIT</button>
+              <button onclick="kirimAbsen('masuk', 'Izin')" class="flex-1 bg-yellow-500 text-white font-bold p-3 rounded-xl shadow-md">IZIN</button>
+            </div>`;
+        }
+      } else if (!status.pulang) {
+        btnContainer.innerHTML = `<button onclick="kirimAbsen('pulang', '${status.tipe_status}')" class="w-full bg-red-600 text-white font-bold p-3 rounded-xl shadow-lg text-lg"><i class="fa-solid fa-sign-out-alt mr-2"></i> ABSEN PULANG</button>`;
+      } else {
+        btnContainer.innerHTML = `<div class="bg-green-100 text-green-800 font-bold p-4 rounded-xl text-center">Absensi Selesai</div>`;
+      }
+    }
+
+    function kirimAbsen(tipe, statusKet) {
+      Swal.fire({
+        title: 'Konfirmasi',
+        text: `Absen ${tipe.toUpperCase()} (${statusKet})?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'Memproses...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+          google.script.run.withSuccessHandler((res) => {
+            if(res.success) {
+              Swal.fire('Berhasil!', res.message, 'success').then(() => { loadAppData(); });
+            } else {
+              Swal.fire('Gagal!', res.message, 'error');
+            }
+          }).submitAbsen(currentUser.email, tipe, userCoords.lat, userCoords.lng, statusKet);
+        }
+      });
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-blue-600');
+        btn.classList.add('text-gray-400');
+      });
+      document.querySelector(`[data-target="tab-${tabName}"]`).classList.add('text-blue-600');
+      document.querySelector(`[data-target="tab-${tabName}"]`).classList.remove('text-gray-400');
+      if (tabName === 'riwayat') loadRiwayat();
+    }
+
+// Ganti XXXXX dengan URL Web App (Deployment) Google Apps Script Anda
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnCFlg_Gf72nzZpgBTMVXZ0jEbwibHw9U1pwLcxilPcyBXSzRWUBhMWNc2O3VKW0Xv8w/exec";
+
+function loadRiwayat() {
+  const listContainer = document.getElementById('history-list');
+  listContainer.innerHTML = `<div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl text-blue-500"></i></div>`;
+
+  // Menggunakan fetch sebagai pengganti google.script.run
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors", // Gunakan ini jika ada kendala CORS, atau hapus jika sudah lancar
+    body: JSON.stringify({
+      action: "getRiwayat",
+      email: currentUser.email,
+      filterBulan: activeMonth
+    })
+  })
+  .then(response => {
+    // Karena Apps Script doPost mengembalikan JSON, kita proses di sini
+    return fetch(SCRIPT_URL + "?action=getRiwayat&email=" + currentUser.email + "&filterBulan=" + activeMonth);
+  })
+  .then(res => res.json())
+  .then(data => {
+    let html = '';
+    
+    // --- LOGIKA HITUNG REKAP ---
+    let hitungHadir = 0;
+    let hitungIzin = 0;
+    let hitungSakit = 0;
+
+    if (!data || data.length === 0) {
+      html = `<div class="text-center text-gray-400 py-10">Kosong.</div>`;
+    } else {
+      data.forEach(item => {
+        // Hitung status
+        if (item.status === 'Hadir' || item.status === 'WFH') {
+          hitungHadir++;
+        } else if (item.status === 'Izin') {
+          hitungIzin++;
+        } else if (item.status === 'Sakit') {
+          hitungSakit++;
+        }
+
+        let badgeClass = 'bg-blue-100 text-blue-700';
+        if (item.status === 'Hadir') badgeClass = 'bg-green-100 text-green-700';
+        if (item.status === 'Sakit' || item.status === 'Izin') badgeClass = 'bg-yellow-100 text-yellow-700';
+        
+        html += `
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center mb-4 relative overflow-hidden">
+            <div class="absolute left-0 top-0 bottom-0 w-1 ${item.status === 'Hadir' ? 'bg-green-500' : (item.status === 'Sakit' ? 'bg-red-500' : 'bg-blue-500')}"></div>
+            <div class="flex flex-col flex-1 ml-2">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="bg-gray-100 p-2 rounded-lg text-gray-500"><i class="fa-solid fa-calendar-day text-xs"></i></div>
+                <div>
+                  <span class="text-[9px] font-bold text-gray-400 uppercase leading-none block">Tanggal Absen</span>
+                  <p class="font-bold text-gray-800 text-sm leading-tight">${item.tanggal}</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-0 border-t border-gray-50 pt-3">
+                <div class="flex flex-col">
+                  <span class="text-[9px] text-gray-400 uppercase font-bold mb-1">Masuk</span>
+                  <div class="flex items-center text-green-600"><i class="fa-solid fa-right-to-bracket text-xs mr-1.5"></i><span class="text-sm font-bold">${item.masuk}</span></div>
+                </div>
+                <div class="flex flex-col border-l border-gray-100 pl-4">
+                  <span class="text-[9px] text-gray-400 uppercase font-bold mb-1">Pulang</span>
+                  <div class="flex items-center text-red-500"><i class="fa-solid fa-right-from-bracket text-xs mr-1.5"></i><span class="text-sm font-bold">${item.pulang}</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              <span class="${badgeClass} text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm border border-white/20">${item.status}</span>
+            </div>
+          </div>`;
+      });
+    }
+    
+    // Update UI Rekap
+    document.getElementById('rekap-hadir').innerText = hitungHadir;
+    document.getElementById('rekap-izin').innerText = hitungIzin;
+    document.getElementById('rekap-sakit').innerText = hitungSakit;
+
+    listContainer.innerHTML = html;
+  })
+  .catch(err => {
+    console.error("Error load data:", err);
+    listContainer.innerHTML = `<div class="text-center text-red-500 py-10 text-xs text-pretty p-4 font-bold uppercase">Gagal memuat data. Periksa koneksi atau URL Script Anda.</div>`;
+  });
+}
+
+    function logout() {
+      Swal.fire({
+        title: 'Keluar?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Logout'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          localStorage.removeItem('absensi_user');
+          location.reload();
+        }
+      });
+    }
+</script>
+</body>
+</html>
